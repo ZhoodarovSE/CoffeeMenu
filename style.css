@@ -1,0 +1,161 @@
+/* style.css — нежно-голубое меню кофейни "Blue Foam" */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+    background: #f8fbfd;
+    color: #2d3748;
+    line-height: 1.7;
+    min-height: 100vh;
+    background-image:
+            radial-gradient(circle at 10% 90%, #d1dfe9 0%, transparent 50%),
+            radial-gradient(circle at 90% 10%, #c8dae6 0%, transparent 50%);
+}
+
+::selection {
+    background: #89a8c4;
+    color: #fff;
+}
+
+/* Стартовый экран — лёгкий, воздушный, как молочная пена */
+#language-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f1f6fa 50%, #e8f1f8 100%);
+}
+
+#language-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 80"><path fill="%2389a8c415" d="M50,10 Q70,30 68,55 Q60,75 50,78 Q40,75 32,55 Q30,30 50,10Z"/></svg>') repeat;
+    background-size: 120px;
+    opacity: 0.25;
+    animation: slowFloat 30s infinite linear;
+}
+
+@keyframes slowFloat {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(40px, -50px); }
+}
+
+/* Чашка с голубым акцентом */
+.logo-intro {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 44px;
+    background: url('https://api.iconify.design/twemoji/hot-beverage.svg') no-repeat center;
+    background-size: contain;
+    filter: drop-shadow(0 15px 30px rgba(137, 168, 196, 0.25));
+    animation: floatUp 6s infinite ease-in-out;
+}
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.05); }
+}
+
+#language-screen h1 {
+    font-size: 5.2rem;
+    font-weight: 900;
+    letter-spacing: -3px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #4a7cab 0%, #6b9ac4 45%, #89a8c4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+#language-screen p {
+    font-size: 1.55rem;
+    color: #597292;
+    opacity: 0.9;
+    margin-bottom: 80px;
+    max-width: 680px;
+    font-weight: 400;
+}
+
+/* Кнопки — мягкие, как зефир в голубом латте */
+button {
+    padding: 26px 60px;
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 16px;
+    border: none;
+    border-radius: 32px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+
+    background: linear-gradient(135deg, #e8f1f8 0%, #d1dfe9 100%);
+    color: #3c6088;
+    box-shadow:
+            0 14px 35px rgba(137, 168, 196, 0.28),
+            0 6px 12px rgba(0, 0, 0, 0.08),
+            inset 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    transition: left 0.7s;
+}
+
+button:hover {
+    transform: translateY(-10px);
+    background: linear-gradient(135deg, #ffffff 0%, #e8f4fa 100%);
+    box-shadow:
+            0 30px 60px rgba(137, 168, 196, 0.4),
+            0 12px 24px rgba(0, 0, 0, 0.12);
+    color: #2c5494;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+button:active {
+    transform: translateY(-4px);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 640px) {
+    #language-screen h1 {
+        font-size: 3.6rem;
+        letter-spacing: -1.5px;
+    }
+
+    #language-screen p {
+        font-size: 1.3rem;
+        padding: 0 20px;
+    }
+
+    button {
+        padding: 20px 44px;
+        font-size: 1.4rem;
+        border-radius: 26px;
+    }
+
+    .logo-intro {
+        width: 110px;
+        height: 110px;
+    }
+}
