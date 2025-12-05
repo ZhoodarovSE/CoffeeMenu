@@ -7,24 +7,24 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="language-screen" style="text-align: center; padding: 100px 20px;">
+<div id="language-screen" class="screen">
   <h1>Выберите язык / Choose language</h1>
-  <div style="margin-top: 50px;">
-    <button style="padding: 20px 40px; font-size: 24px; margin: 10px;" onclick="setLanguage('ru')">Русский</button><br>
-    <button style="padding: 20px 40px; font-size: 24px; margin: 10px;" onclick="setLanguage('en')">English</button>
+  <div class="lang-buttons">
+    <button onclick="setLanguage('ru')">Русский</button>
+    <button onclick="setLanguage('en')">English</button>
   </div>
 </div>
 
-<div id="menu-screen" class="hidden">
-  <header style="background: #8B6F47; color: white; padding: 15px; text-align: center; position: sticky; top: 0;">
-    <button style="background:none; border:none; color:white; font-size:28px; float:left;">← Back</button>
-    <h1 style="margin:0; display:inline-block;">Кофейня "AYLA"</h1>
+<div id="menu-screen" class="screen hidden">
+  <header>
+    <button onclick="goBack()" id="back-btn">← Назад</button>
+    <h1 id="cafe-name">"AYLA"</h1>
   </header>
 
-  <div id="categories" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; padding: 40px 20px; max-width: 800px; margin: 0 auto;">
-    <!-- Категории будут тут -->
-  </div>
+  <main>
+    <div id="categories" class="categories-grid"></div>
+    <div id="items" class="items-list hidden"></div>
+  </main>
 </div>
 
 <script src="script.js"></script>

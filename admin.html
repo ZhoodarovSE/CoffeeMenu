@@ -3,12 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админка меню</title>
+    <title>Админка меню AYLA</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-item {
+            padding: 16px;
+            margin: 12px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .admin-item span {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .admin-item img { border-radius: 8px; }
+        .lang-label {
+            font-weight: bold;
+            color: #d4a574;
+            margin-top: 12px;
+            display: block;
+        }
+    </style>
 </head>
 <body>
 <div class="admin-container">
-    <h1>Админка кофейни (пароль: 12345)</h1>
+    <h1>Админка кофейни AYLA <small style="color:#d4a574;">(пароль: 12345)</small></h1>
     <input type="password" id="admin-pass" placeholder="Введите пароль" class="admin-input">
     <button onclick="checkPassword()" class="admin-btn">Войти</button>
 
@@ -18,7 +42,9 @@
         <div id="categories-list"></div>
 
         <h2>Управление позициями</h2>
-        <select id="cat-select" class="admin-input" onchange="loadItems()"></select>
+        <select id="cat-select" class="admin-input" onchange="loadItems()">
+            <option value="">— Выберите категорию —</option>
+        </select>
         <button onclick="addItem()" class="admin-btn">+ Добавить позицию</button>
         <div id="items-list"></div>
     </div>
@@ -28,8 +54,7 @@
     let currentCatId = null;
 
     function checkPassword() {
-        const pass = document.getElementById('admin-pass').value;
-        if (pass === '12345') {
+        if (document.getElementById('admin-pass').value === '12345') {
             document.getElementById('admin-panel').classList.remove('hidden');
             loadAdmin();
         } else {
@@ -44,17 +69,19 @@
             const catList = document.getElementById('categories-list');
             const select = document.getElementById('cat-select');
             catList.innerHTML = '';
-            select.innerHTML = '<option value="">Выберите категорию</option>';
+            select.innerHTML = '<option value="">— Выберите категорию —</option>';
 
             cats.forEach(cat => {
-                select.innerHTML += `<option value="${cat.id}">${cat.name_ru}</option>`;
+                select.innerHTML += `<option value="${cat.id}">${cat.name_ru} / ${cat.name_en}</option>`;
                 catList.innerHTML += `
-            <div class="admin-item">
-              <img src="${cat.image}" width="50" height="50" alt="${cat.name_ru}">
-              <span>${cat.name_ru} / ${cat.name_en}</span>
-              <button onclick="deleteCategory(${cat.id})" class="admin-delete">Удалить</button>
-            </div>
-          `;
+                    <div class="admin-item">
+                        <img src="${cat.image}" width="60" height="60" alt="">
+                        <span>
+                            <strong>${cat.name_ru}</strong><br>
+                            <small style="color:#a8b5b2;">${cat.name_en || '(нет англ. названия)'}</small>
+                        </span>
+                        <button onclick="deleteCategory(${cat.id})" class="admin-delete">Удалить</button>
+                    </div>`;
             });
         } catch (err) {
             alert('Ошибка загрузки: ' + err);
@@ -62,101 +89,99 @@
     }
 
     async function addCategory() {
-        const name_ru = prompt('Название на русском:');
+        const name_ru = prompt('Название категории на русском:');
         if (!name_ru) return;
         const name_en = prompt('Название на английском:', name_ru);
-        const image = prompt('Ссылка на фото (Unsplash или другая):', 'https://images.unsplash.com/photo-...');
+        const image = prompt('Ссылка на фото (Unsplash и т.п.):', 'https://images.unsplash.com/photo-');
         if (!image) return;
 
-        try {
-            await fetch('/api/admin/categories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name_ru, name_en, image })
-            });
-            loadAdmin();
-            alert('Категория добавлена!');
-        } catch (err) {
-            alert('Ошибка: ' + err);
-        }
+        await fetch('/api/admin/categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name_ru, name_en: name_en || name_ru, image })
+        });
+        loadAdmin();
+        alert('Категория добавлена!');
     }
 
     async function deleteCategory(id) {
-        if (!confirm('Удалить категорию и все позиции в ней?')) return;
-        try {
-            await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
-            loadAdmin();
-            alert('Удалено!');
-        } catch (err) {
-            alert('Ошибка: ' + err);
-        }
+        if (!confirm('Удалить категорию и ВСЕ позиции в ней?')) return;
+        await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
+        loadAdmin();
+        loadItems(); // обновим список
+        alert('Категория удалена');
     }
 
     async function loadItems() {
         const catId = document.getElementById('cat-select').value;
-        if (!catId) return;
+        if (!catId) {
+            document.getElementById('items-list').innerHTML = '';
+            currentCatId = null;
+            return;
+        }
         currentCatId = catId;
 
-        try {
-            const res = await fetch(`/api/items/${catId}`);
-            const items = await res.json();
-            const list = document.getElementById('items-list');
-            list.innerHTML = '';
+        const res = await fetch(`/api/items/${catId}`);
+        const items = await res.json();
+        const list = document.getElementById('items-list');
+        list.innerHTML = items.length === 0
+            ? '<p style="text-align:center; color:#a8b5b2; padding:30px;">Позиций пока нет</p>'
+            : '';
 
-            items.forEach(item => {
-                list.innerHTML += `
-            <div class="admin-item">
-              <img src="${item.image}" width="50" height="50" alt="${item.name_ru}">
-              <span>${item.name_ru} — ${item.price} ₽</span>
-              <button onclick="deleteItem(${item.id})" class="admin-delete">Удалить</button>
-            </div>
-          `;
-            });
-        } catch (err) {
-            alert('Ошибка загрузки позиций: ' + err);
-        }
+        items.forEach(item => {
+            list.innerHTML += `
+                <div class="admin-item">
+                    <img src="${item.image}" width="70" height="70" alt="">
+                    <span>
+                        <strong>${item.name_ru}</strong> — ${item.price} ₽<br>
+                        <span class="lang-label">EN:</span> ${item.name_en || '(нет названия)'}
+                        ${item.description_ru ? `<br><small style="color:#a8b5b2;">${item.description_ru}</small>` : ''}
+                        ${item.description_en ? `<br><small style="color:#d4a574;">EN: ${item.description_en}</small>` : ''}
+                    </span>
+                    <button onclick="deleteItem(${item.id})" class="admin-delete">Удалить</button>
+                </div>`;
+        });
     }
 
     async function addItem() {
         if (!currentCatId) return alert('Сначала выберите категорию!');
+
         const name_ru = prompt('Название на русском:');
         if (!name_ru) return;
-        const name_en = prompt('Название на английском:', name_ru);
-        const desc_ru = prompt('Описание/состав на русском:');
-        const price = parseFloat(prompt('Цена (₽):', '200'));
-        const image = prompt('Ссылка на фото:', 'https://images.unsplash.com/photo-...');
-        if (!image || isNaN(price)) return;
 
-        try {
-            await fetch('/api/admin/items', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    category_id: currentCatId,
-                    name_ru,
-                    name_en,
-                    description_ru: desc_ru,
-                    description_en: desc_ru,
-                    price,
-                    image
-                })
-            });
-            loadItems();
-            alert('Позиция добавлена!');
-        } catch (err) {
-            alert('Ошибка: ' + err);
-        }
+        const name_en = prompt('Название на английском:', name_ru) || name_ru;
+
+        const desc_ru = prompt('Описание на русском:') || '';
+        const desc_en = prompt('Описание на английском (можно оставить пустым):', desc_ru) || desc_ru;
+
+        const price = parseFloat(prompt('Цена в рублях:', '250'));
+        if (isNaN(price)) return alert('Некорректная цена!');
+
+        const image = prompt('Ссылка на фото:', 'https://images.unsplash.com/photo-') || '';
+
+        await fetch('/api/admin/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category_id: currentCatId,
+                name_ru,
+                name_en,
+                description_ru: desc_ru,
+                description_en: desc_en,
+                price,
+                image
+            })
+        });
+
+        loadItems();
+        alert('Позиция добавлена!');
     }
 
     async function deleteItem(id) {
-        if (!confirm('Удалить позицию?')) return;
-        try {
-            await fetch(`/api/admin/items/${id}`, { method: 'DELETE' });
-            loadItems();
-            alert('Удалено!');
-        } catch (err) {
-            alert('Ошибка: ' + err);
-        }
+        if (!confirm('Удалить эту позицию?')) return;
+        await fetch(`/api/admin/items/${id}`, { method: 'DELETE' });
+        loadItems();
+        alert('Позиция удалена');
     }
 </script>
 </body>
