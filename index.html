@@ -2,13 +2,14 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Меню кофейни "AYLA"</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AYLA Coffee</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div id="language-screen" class="screen">
-  <h1>Выберите язык / Choose language</h1>
+  <div class="logo-large">AYLA</div>
   <div class="lang-buttons">
     <button onclick="setLanguage('ru')">Русский</button>
     <button onclick="setLanguage('en')">English</button>
@@ -17,15 +18,68 @@
 
 <div id="menu-screen" class="screen hidden">
   <header>
-    <button onclick="goBack()" id="back-btn">←</button>
+    <button onclick="goBack()" id="back-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
     <h1 id="cafe-name">AYLA</h1>
-    <div id="header-spacer"></div> <!-- симметричный отступ справа -->
+    <div id="bonus-display" onclick="openGame()">
+      <span id="bonus-points">0</span> ★
+    </div>
   </header>
 
   <main>
     <div id="categories" class="categories-grid"></div>
+
+    <div id="promo-carousel" class="carousel-container">
+      <h2 class="section-title">Акции / Promo</h2>
+      <div class="carousel-wrapper">
+        <button class="carousel-arrow prev" onclick="prevSlide()">❮</button>
+        <div class="carousel-track-container" id="carousel-container-box">
+          <div class="carousel-track" id="carousel-track"></div>
+        </div>
+        <button class="carousel-arrow next" onclick="nextSlide()">❯</button>
+      </div>
+      <div class="carousel-indicators" id="carousel-indicators"></div>
+    </div>
+
     <div id="items" class="items-list hidden"></div>
   </main>
+
+  <button id="play-btn" onclick="openGame()">
+    <span class="play-icon">☕️</span>
+    <span class="play-text">Бонусы</span>
+  </button>
+</div>
+
+<div id="game-modal" class="modal hidden">
+  <div class="modal-content">
+    <button class="close-game" onclick="closeGame()">×</button>
+
+    <div id="game-start-screen" class="game-ui-layer">
+      <div class="game-logo">☕️</div>
+      <h2 id="game-title">Coffee Catch</h2>
+      <p id="game-desc">Лови чашку кофе!<br>Избегай всего остального.</p>
+      <div class="score-pill">🏆 Record: <span id="high-score">0</span></div>
+      <button onclick="startGame()" class="game-btn-primary">ИГРАТЬ</button>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div id="game-over-screen" class="game-ui-layer hidden">
+      <h2>Game Over</h2>
+      <p id="game-over-reason" style="margin-bottom:10px; color:#ff6b6b; font-size: 0.9rem;">...</p>
+      <div class="result-score">
+        <span>+<span id="current-score">0</span></span>
+        <small>бонусов</small>
+      </div>
+      <div class="game-actions">
+        <button onclick="startGame()" class="game-btn-primary">Еще раз</button>
+        <button onclick="closeGame()" class="game-btn-secondary">Выход</button>
+      </div>
+    </div>
+
+    <div id="score-fx" class="hidden">+10</div>
+  </div>
 </div>
 
 <script src="script.js"></script>

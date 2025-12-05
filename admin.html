@@ -3,185 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админка меню AYLA</title>
+    <title>AYLA Admin</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .admin-item {
-            padding: 16px;
-            margin: 12px 0;
-            background: rgba(255,255,255,0.05);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .admin-item span {
-            flex: 1;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-        .admin-item img { border-radius: 8px; }
-        .lang-label {
-            font-weight: bold;
-            color: #d4a574;
-            margin-top: 12px;
-            display: block;
-        }
-    </style>
 </head>
-<body>
+<body class="admin-body">
+
 <div class="admin-container">
-    <h1>Админка кофейни AYLA <small style="color:#d4a574;">(пароль: 12345)</small></h1>
-    <input type="password" id="admin-pass" placeholder="Введите пароль" class="admin-input">
-    <button onclick="checkPassword()" class="admin-btn">Войти</button>
+    <div id="login-screen" class="admin-card login-card">
+        <h1>AYLA Admin</h1>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Вход в панель управления</p>
+        <input type="password" id="admin-pass" placeholder="Пароль (12345)" class="admin-input big-input" onkeyup="if(event.key === 'Enter') checkPassword()">
+        <button onclick="checkPassword()" class="admin-btn primary-btn full-width">Войти</button>
+        <p id="login-error" style="color: var(--danger); margin-top: 10px; display: none;">Неверный пароль</p>
+    </div>
 
-    <div id="admin-panel" class="hidden">
-        <h2>Управление категориями</h2>
-        <button onclick="addCategory()" class="admin-btn">+ Добавить категорию</button>
-        <div id="categories-list"></div>
+    <div id="admin-panel" class="hidden animate-fade-in">
+        <header class="admin-header">
+            <h2>Панель управления</h2>
+            <button onclick="logout()" class="admin-btn text-btn">Выйти</button>
+        </header>
 
-        <h2>Управление позициями</h2>
-        <select id="cat-select" class="admin-input" onchange="loadItems()">
-            <option value="">— Выберите категорию —</option>
-        </select>
-        <button onclick="addItem()" class="admin-btn">+ Добавить позицию</button>
-        <div id="items-list"></div>
+        <section class="admin-section">
+            <div class="section-header">
+                <h3>📁 Категории</h3>
+            </div>
+
+            <div class="admin-card form-card">
+                <h4>Добавить категорию</h4>
+                <div class="form-row">
+                    <input type="text" id="cat-name-ru" placeholder="Название (RU)" class="admin-input">
+                    <input type="text" id="cat-name-en" placeholder="Name (EN)" class="admin-input">
+                </div>
+                <input type="text" id="cat-image" placeholder="Ссылка на картинку" class="admin-input">
+                <button onclick="addCategory()" class="admin-btn primary-btn">Добавить</button>
+            </div>
+
+            <div id="admin-categories-list" class="admin-list">
+            </div>
+        </section>
+
+        <section id="items-section" class="admin-section hidden">
+            <div class="section-header">
+                <h3>☕️ Товары в категории: <span id="current-cat-name" style="color: var(--accent);">...</span></h3>
+            </div>
+
+            <div class="admin-card form-card">
+                <h4>Добавить товар</h4>
+                <div class="form-row">
+                    <input type="text" id="item-name-ru" placeholder="Название (RU)" class="admin-input">
+                    <input type="text" id="item-name-en" placeholder="Name (EN)" class="admin-input">
+                </div>
+                <div class="form-row">
+                    <input type="text" id="item-desc-ru" placeholder="Описание (RU)" class="admin-input">
+                    <input type="text" id="item-desc-en" placeholder="Description (EN)" class="admin-input">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="item-price" placeholder="Цена (250)" class="admin-input">
+                    <input type="text" id="item-image" placeholder="Ссылка на картинку" class="admin-input">
+                </div>
+                <button onclick="addItem()" class="admin-btn primary-btn">Добавить товар</button>
+            </div>
+
+            <div id="admin-items-list" class="admin-list">
+            </div>
+        </section>
     </div>
 </div>
 
 <script>
     let currentCatId = null;
 
+    // === ЛОГИКА ВХОДА ===
     function checkPassword() {
-        if (document.getElementById('admin-pass').value === '12345') {
+        const pass = document.getElementById('admin-pass').value;
+        const errorMsg = document.getElementById('login-error');
+
+        // Проверка чисто на клиенте (нет запроса к серверу = нет ошибки сети)
+        if(pass === '12345') {
+            document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('admin-panel').classList.remove('hidden');
-            loadAdmin();
+            loadCategories(); // Загружаем данные только после входа
         } else {
-            alert('Неправильный пароль!');
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = "Неверный пароль!";
         }
     }
 
-    async function loadAdmin() {
+    function logout() {
+        location.reload();
+    }
+
+    // === РАБОТА С ДАННЫМИ ===
+
+    async function loadCategories() {
         try {
             const res = await fetch('/api/categories');
-            const cats = await res.json();
-            const catList = document.getElementById('categories-list');
-            const select = document.getElementById('cat-select');
-            catList.innerHTML = '';
-            select.innerHTML = '<option value="">— Выберите категорию —</option>';
+            const categories = await res.json();
+            const list = document.getElementById('admin-categories-list');
+            list.innerHTML = '';
 
-            cats.forEach(cat => {
-                select.innerHTML += `<option value="${cat.id}">${cat.name_ru} / ${cat.name_en}</option>`;
-                catList.innerHTML += `
-                    <div class="admin-item">
-                        <img src="${cat.image}" width="60" height="60" alt="">
-                        <span>
-                            <strong>${cat.name_ru}</strong><br>
-                            <small style="color:#a8b5b2;">${cat.name_en || '(нет англ. названия)'}</small>
-                        </span>
-                        <button onclick="deleteCategory(${cat.id})" class="admin-delete">Удалить</button>
-                    </div>`;
+            categories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'admin-list-item';
+                div.innerHTML = `
+                    <img src="${cat.image || 'img/placeholder.png'}" onerror="this.src='https://via.placeholder.com/60'">
+                    <div class="item-details">
+                        <span class="ru">${cat.name_ru}</span>
+                        <span class="en">${cat.name_en}</span>
+                    </div>
+                    <button onclick="selectCategory(${cat.id}, '${cat.name_ru}')" class="admin-btn sm-btn" style="margin-right:5px">Открыть</button>
+                    <button onclick="deleteCategory(${cat.id})" class="admin-btn danger-btn sm-btn">X</button>
+                `;
+                list.appendChild(div);
             });
-        } catch (err) {
-            alert('Ошибка загрузки: ' + err);
+        } catch (e) {
+            alert("Ошибка связи с сервером. Убедитесь, что server.js запущен.");
         }
     }
 
     async function addCategory() {
-        const name_ru = prompt('Название категории на русском:');
-        if (!name_ru) return;
-        const name_en = prompt('Название на английском:', name_ru);
-        const image = prompt('Ссылка на фото (Unsplash и т.п.):', 'https://images.unsplash.com/photo-');
-        if (!image) return;
+        const name_ru = document.getElementById('cat-name-ru').value;
+        const name_en = document.getElementById('cat-name-en').value;
+        const image = document.getElementById('cat-image').value;
+
+        if(!name_ru) return alert('Введите название!');
 
         await fetch('/api/admin/categories', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name_ru, name_en: name_en || name_ru, image })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name_ru, name_en, image})
         });
-        loadAdmin();
-        alert('Категория добавлена!');
+
+        // Очистка полей
+        document.getElementById('cat-name-ru').value = '';
+        document.getElementById('cat-name-en').value = '';
+        document.getElementById('cat-image').value = '';
+
+        loadCategories();
     }
 
     async function deleteCategory(id) {
-        if (!confirm('Удалить категорию и ВСЕ позиции в ней?')) return;
-        await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
-        loadAdmin();
-        loadItems(); // обновим список
-        alert('Категория удалена');
+        if(confirm('Удалить категорию и все товары в ней?')) {
+            await fetch(`/api/admin/categories/${id}`, {method: 'DELETE'});
+            loadCategories();
+            document.getElementById('items-section').classList.add('hidden');
+        }
     }
 
-    async function loadItems() {
-        const catId = document.getElementById('cat-select').value;
-        if (!catId) {
-            document.getElementById('items-list').innerHTML = '';
-            currentCatId = null;
-            return;
-        }
-        currentCatId = catId;
+    function selectCategory(id, name) {
+        currentCatId = id;
+        document.getElementById('current-cat-name').textContent = name;
+        document.getElementById('items-section').classList.remove('hidden');
+        loadItems(id);
 
-        const res = await fetch(`/api/items/${catId}`);
+        // Скролл вниз к товарам
+        document.getElementById('items-section').scrollIntoView({behavior: 'smooth'});
+    }
+
+    async function loadItems(catId) {
+        const res = await fetch(`/api/items?category_id=${catId}`);
         const items = await res.json();
-        const list = document.getElementById('items-list');
-        list.innerHTML = items.length === 0
-            ? '<p style="text-align:center; color:#a8b5b2; padding:30px;">Позиций пока нет</p>'
-            : '';
+        const list = document.getElementById('admin-items-list');
+        list.innerHTML = '';
 
         items.forEach(item => {
-            list.innerHTML += `
-                <div class="admin-item">
-                    <img src="${item.image}" width="70" height="70" alt="">
-                    <span>
-                        <strong>${item.name_ru}</strong> — ${item.price} сом<br>
-                        <span class="lang-label">EN:</span> ${item.name_en || '(нет названия)'}
-                        ${item.description_ru ? `<br><small style="color:#a8b5b2;">${item.description_ru}</small>` : ''}
-                        ${item.description_en ? `<br><small style="color:#d4a574;">EN: ${item.description_en}</small>` : ''}
-                    </span>
-                    <button onclick="deleteItem(${item.id})" class="admin-delete">Удалить</button>
-                </div>`;
+            const div = document.createElement('div');
+            div.className = 'admin-list-item';
+            div.innerHTML = `
+                <img src="${item.image || 'img/placeholder.png'}" onerror="this.src='https://via.placeholder.com/60'">
+                <div class="item-details">
+                    <span class="ru">${item.name_ru}</span>
+                    <span class="price">${item.price} ₽</span>
+                </div>
+                <button onclick="deleteItem(${item.id})" class="admin-btn danger-btn sm-btn">X</button>
+            `;
+            list.appendChild(div);
         });
     }
 
     async function addItem() {
-        if (!currentCatId) return alert('Сначала выберите категорию!');
+        if(!currentCatId) return;
 
-        const name_ru = prompt('Название на русском:');
-        if (!name_ru) return;
+        const name_ru = document.getElementById('item-name-ru').value;
+        const name_en = document.getElementById('item-name-en').value;
+        const description_ru = document.getElementById('item-desc-ru').value;
+        const description_en = document.getElementById('item-desc-en').value;
+        const price = document.getElementById('item-price').value;
+        const image = document.getElementById('item-image').value;
 
-        const name_en = prompt('Название на английском:', name_ru) || name_ru;
-
-        const desc_ru = prompt('Описание на русском:') || '';
-        const desc_en = prompt('Описание на английском (можно оставить пустым):', desc_ru) || desc_ru;
-
-        const price = parseFloat(prompt('Цена в рублях:', '250'));
-        if (isNaN(price)) return alert('Некорректная цена!');
-
-        const image = prompt('Ссылка на фото:', 'https://images.unsplash.com/photo-') || '';
+        if(!name_ru || !price) return alert('Нужно название и цена!');
 
         await fetch('/api/admin/items', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 category_id: currentCatId,
-                name_ru,
-                name_en,
-                description_ru: desc_ru,
-                description_en: desc_en,
-                price,
-                image
+                name_ru, name_en, description_ru, description_en, price, image
             })
         });
 
-        loadItems();
-        alert('Позиция добавлена!');
+        // Очистка
+        document.getElementById('item-name-ru').value = '';
+        document.getElementById('item-price').value = '';
+        document.getElementById('item-image').value = '';
+
+        loadItems(currentCatId);
     }
 
     async function deleteItem(id) {
-        if (!confirm('Удалить эту позицию?')) return;
-        await fetch(`/api/admin/items/${id}`, { method: 'DELETE' });
-        loadItems();
-        alert('Позиция удалена');
+        if(confirm('Удалить товар?')) {
+            await fetch(`/api/admin/items/${id}`, {method: 'DELETE'});
+            loadItems(currentCatId);
+        }
     }
 </script>
 </body>
