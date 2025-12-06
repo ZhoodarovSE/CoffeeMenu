@@ -7,14 +7,12 @@ const banners = [
     { title_ru: "4-й кофе в подарок!", title_en: "Every 4th coffee is free!", img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800" },
     { title_ru: "Скидка 20% с другом", title_en: "Bring a friend - 20% off", img: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=800" },
     { title_ru: "Счастливые часы -30%", title_en: "Happy Hours -30%", img: "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?w=800" },
-    // ИСПРАВЛЕНА ССЫЛКА НА ФОТО В ПОСЛЕДНЕМ БЛОКЕ:
     { title_ru: "Кофе + Десерт = -25%", title_en: "Coffee + Dessert = -25%", img: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800" }
 ];
 
 // === Инициализация ===
 document.addEventListener('DOMContentLoaded', () => {
     updateBonusDisplay();
-    // Скрываем кнопку пока не выбран язык
     toggleBackButton(false);
 });
 
@@ -25,11 +23,14 @@ function updateBonusDisplay() {
 
 function setLanguage(lang) {
     currentLang = lang;
+
+    // Скрываем экран языка, показываем меню
     document.getElementById('language-screen').classList.add('hidden');
-    document.getElementById('menu-screen').classList.remove('hidden');
+
+    const menuScreen = document.getElementById('menu-screen');
+    menuScreen.classList.remove('hidden');
 
     const isRu = lang === 'ru';
-    // Переводы интерфейса
     document.querySelector('.play-text').textContent = isRu ? 'Бонусы' : 'Bonuses';
     document.getElementById('game-title').textContent = isRu ? 'Поймай кофе' : 'Catch Coffee';
     document.getElementById('game-desc').innerHTML = isRu
@@ -41,7 +42,7 @@ function setLanguage(lang) {
     loadCategories();
 }
 
-// === КАРУСЕЛЬ + СВАЙПЫ ===
+// === КАРУСЕЛЬ + СВАЙПЫ + СТРЕЛКИ ===
 let currentSlide = 0;
 let carouselInterval;
 
@@ -49,12 +50,15 @@ function initCarousel() {
     const track = document.getElementById('carousel-track');
     const indicators = document.getElementById('carousel-indicators');
     const container = document.getElementById('carousel-container-box');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
     if(!track) return;
 
     track.innerHTML = '';
     indicators.innerHTML = '';
 
+    // Генерация слайдов
     banners.forEach((banner, index) => {
         const slide = document.createElement('div');
         slide.className = 'carousel-slide';
@@ -70,29 +74,49 @@ function initCarousel() {
         indicators.appendChild(dot);
     });
 
-    let touchStartX = 0;
-    let touchEndX = 0;
+    // Обработка кнопок
+    if (prevBtn && nextBtn) {
+        prevBtn.onclick = () => { prevSlide(); startCarouselAuto(); };
+        nextBtn.onclick = () => { nextSlide(); startCarouselAuto(); };
+    }
 
+    // === ЛОГИКА СВАЙПА (Touch & Mouse) ===
+    let startX = 0;
+    let endX = 0;
+
+    // Для телефонов (Touch)
     container.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-        clearInterval(carouselInterval);
+        startX = e.changedTouches[0].clientX;
+        clearInterval(carouselInterval); // Пауза при касании
     }, {passive: true});
 
     container.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
+        endX = e.changedTouches[0].clientX;
         handleSwipe();
-        startCarouselAuto();
+        startCarouselAuto(); // Запуск после отпускания
     }, {passive: true});
 
-    container.addEventListener('mousedown', (e) => touchStartX = e.screenX);
+    // Для мышки (Desktop drag simulation)
+    container.addEventListener('mousedown', (e) => {
+        startX = e.clientX;
+        clearInterval(carouselInterval);
+    });
+
     container.addEventListener('mouseup', (e) => {
-        touchEndX = e.screenX;
+        endX = e.clientX;
         handleSwipe();
+        startCarouselAuto();
     });
 
     function handleSwipe() {
-        if (touchEndX < touchStartX - 50) nextSlide();
-        if (touchEndX > touchStartX + 50) prevSlide();
+        // Если свайпнули влево (палец движется влево, значит хотим следующий слайд)
+        if (startX - endX > 50) {
+            nextSlide();
+        }
+        // Если свайпнули вправо (палец движется вправо, значит хотим предыдущий слайд)
+        if (endX - startX > 50) {
+            prevSlide();
+        }
     }
 
     updateCarouselPosition();
@@ -116,12 +140,14 @@ async function loadCategories() {
     const container = document.getElementById('categories');
 
     container.classList.remove('hidden');
-    document.getElementById('promo-carousel').classList.remove('hidden');
+    // Показываем карусель (она теперь внизу)
+    const carousel = document.getElementById('promo-carousel');
+    if(carousel) carousel.classList.remove('hidden');
+
     document.getElementById('items').classList.add('hidden');
 
-    // ИЗМЕНЕНИЕ: Теперь кнопка "Назад" видна всегда, когда мы в меню
     toggleBackButton(true);
-    historyStack = []; // Очищаем историю, значит мы на главной странице меню
+    historyStack = [];
 
     container.innerHTML = '<div class="loading">Loading...</div>';
 
@@ -132,18 +158,22 @@ async function loadCategories() {
         container.innerHTML = '';
 
         if(categories.length === 0) {
-            container.innerHTML = '<p style="text-align:center; width:100%; opacity:0.6;">Нет категорий</p>';
+            container.innerHTML = '<p class="empty-state">Нет категорий</p>';
             return;
         }
 
         categories.forEach((cat, index) => {
             const div = document.createElement('div');
+            // Класс анимации
             div.className = 'category-card animate-fadeInUp';
+            // Задержка
             div.style.animationDelay = `${index * 0.1}s`;
+
             div.innerHTML = `
                 <img src="${cat.image || 'img/placeholder.png'}" alt="${cat.name_ru}" onerror="this.src='https://via.placeholder.com/150'">
-                <span class="category-title">${currentLang === 'ru' ? cat.name_ru : cat.name_en}</span>
+                <div class="category-title">${currentLang === 'ru' ? cat.name_ru : cat.name_en}</div>
             `;
+
             div.onclick = () => loadItems(cat.id, currentLang === 'ru' ? cat.name_ru : cat.name_en);
             container.appendChild(div);
         });
@@ -155,17 +185,18 @@ async function loadCategories() {
 }
 
 async function loadItems(catId, catName) {
-    // Добавляем маркер в историю, что мы ушли внутрь категории
     historyStack.push('categories');
     toggleBackButton(true);
 
     document.getElementById('categories').classList.add('hidden');
+    // Скрываем карусель, когда смотрим товары
     document.getElementById('promo-carousel').classList.add('hidden');
+
     const container = document.getElementById('items');
     container.classList.remove('hidden');
 
     container.innerHTML = `
-        <h2 class="section-title">${catName}</h2>
+        <h2 class="section-title animate-fadeInUp">${catName}</h2>
         <div id="items-list" class="items-list-container"><div class="loading">Loading...</div></div>
     `;
 
@@ -183,8 +214,10 @@ async function loadItems(catId, catName) {
         items.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'item-card animate-fadeInUp';
-            div.style.animationDelay = `${index * 0.1}s`;
+            div.style.animationDelay = `${index * 0.05}s`;
+
             const desc = currentLang === 'ru' ? item.description_ru : item.description_en;
+
             div.innerHTML = `
                 <img src="${item.image || 'img/placeholder.png'}" onerror="this.src='https://via.placeholder.com/150'">
                 <div class="item-details">
@@ -199,19 +232,16 @@ async function loadItems(catId, catName) {
     }
 }
 
-// ИЗМЕНЕННАЯ ФУНКЦИЯ НАЗАД
 function goBack() {
-    // Если есть история (мы внутри категории), возвращаемся к категориям
     if (historyStack.length > 0) {
         historyStack.pop();
         document.getElementById('items').classList.add('hidden');
         document.getElementById('categories').classList.remove('hidden');
         document.getElementById('promo-carousel').classList.remove('hidden');
     } else {
-        // Если истории нет (мы на главной странице меню), возвращаемся к ВЫБОРУ ЯЗЫКА
         document.getElementById('menu-screen').classList.add('hidden');
         document.getElementById('language-screen').classList.remove('hidden');
-        toggleBackButton(false); // Скрываем кнопку на экране выбора языка
+        toggleBackButton(false);
     }
 }
 
@@ -224,7 +254,7 @@ function toggleBackButton(show) {
 }
 
 // ==========================================
-// === ИГРА (БЕЗ ИЗМЕНЕНИЙ) ===
+// === ИГРА ===
 // ==========================================
 
 const canvas = document.getElementById('game-canvas');

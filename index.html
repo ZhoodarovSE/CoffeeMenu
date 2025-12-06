@@ -28,18 +28,32 @@
   </header>
 
   <main>
-    <div id="categories" class="categories-grid"></div>
+    <div id="categories" class="categories-grid">
+    </div>
 
-    <div id="promo-carousel" class="carousel-container">
-      <h2 class="section-title">Акции / Promo</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-arrow prev" onclick="prevSlide()">❮</button>
-        <div class="carousel-track-container" id="carousel-container-box">
-          <div class="carousel-track" id="carousel-track"></div>
+    <div id="promo-carousel">
+      <h2 class="section-title">Акции</h2>
+
+      <div id="carousel-container-box" class="carousel-container">
+        <div class="carousel-wrapper">
+
+          <button class="carousel-arrow prev" id="prevBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+
+          <div class="carousel-track-container">
+            <ul class="carousel-track" id="carousel-track">
+            </ul>
+          </div>
+
+          <button class="carousel-arrow next" id="nextBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+
         </div>
-        <button class="carousel-arrow next" onclick="nextSlide()">❯</button>
+
+        <div class="carousel-indicators" id="carousel-indicators"></div>
       </div>
-      <div class="carousel-indicators" id="carousel-indicators"></div>
     </div>
 
     <div id="items" class="items-list hidden"></div>
@@ -69,16 +83,13 @@
       <h2>Game Over</h2>
       <p id="game-over-reason" style="margin-bottom:10px; color:#ff6b6b; font-size: 0.9rem;">...</p>
       <div class="result-score">
-        <span>+<span id="current-score">0</span></span>
-        <small>бонусов</small>
+        <span>+<span id="current-score">0</span> ★</span>
       </div>
-      <div class="game-actions">
-        <button onclick="startGame()" class="game-btn-primary">Еще раз</button>
-        <button onclick="closeGame()" class="game-btn-secondary">Выход</button>
-      </div>
+      <button onclick="startGame()" class="game-btn-primary" style="margin-top:20px">Еще раз</button>
+      <button onclick="closeGame()" class="game-btn-secondary">Выйти</button>
     </div>
 
-    <div id="score-fx" class="hidden">+10</div>
+    <div id="score-fx" class="hidden">+1</div>
   </div>
 </div>
 
